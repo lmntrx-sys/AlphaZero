@@ -7,79 +7,100 @@ import tensorlfow as tf # type: ignore
 import numpy as np
 
 class AlphaZero:
-    def __init__(self, game, args, optimizer, model):
-        self.game= game
-        self.args = args
-        self.optimizer = optimizer
-        self.model = model
-        self.mcts = MCTS(self.args, self.game, self.model)
+  def __init__(self, model, optimizer, game, args):
+    self.model = model
+    self.optimizer = optimizer
+    self.game = game
+    self.args = args
+    self.mcts = MCTS(game, args, model)
+    self.step = tf.Variable(0, dtype=tf.int64)
 
-    def self_paly(self):
-        state = self.game.get_initial_state()
-        player = 1
-        memory = []
+    # --- TensorBoard Setup ---
+    log_dir = os.path.join("logs", datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
+    self.summary_writer = tf.summary.create_file_writer(log_dir)
+    self.log_dir = log_dir
+    # -------------------------
 
-        while True:
-            neutral_state = self.game.change_perspective(state, player)
-            action_probs = self.mcts.search(neutral_state)
 
-            memory.append((neutral_state, action_probs, player))
+  def selfPlay(self):
+    memory = []
+    player = 1
+    state = self.game.get_initial_state()
 
-            action = np.random.choice(self.game.action_space(), p=action_probs)
-            state = self.game.get_next_state(state, action, player)
+    while True:
+      neutral_state = self.game.change_perspective(state, player)
+      action_probs = self.mcts.search(neutral_state)
 
-            value, is_terminal = self.game.get_game_value()
+      memory.append((neutral_state, action_probs, player))
 
-            if is_terminal:
-                returnMemory = []
+      action = np.random.choice(self.game.action_size, p=action_probs)
 
-                for hist_action_probs, hist_neutral_state, cplayer in memory:
-                    hist_outcome = value if cplayer == player else self.game.get_opponent_value(value)
-                    returnMemory = returnMemory.append((
-                        self.game.get_encoded_state(hist_neutral_state),
-                        hist_action_probs, 
-                        hist_outcome
-                    ))
+      state = self.game.get_next_state(state, action, player)
 
-                return returnMemory
-            player = self.game.get_oppponent(player)
+      value, is_terminal = self.game.get_value_and_terminated(state, action)
 
-    def train(self, memory):
+      if is_terminal:
+        returnMemory = []
+        for hist_neutral_state, hist_action_probs, hist_player in memory:
+          hist_outcome = value if hist_player == player else self.game.get_opponent_value(value)
+          returnMemory.append((
+            self.game.get_encoded_state(hist_neutral_state),
+            hist_action_probs,
+            hist_outcome
+          ))
+        return returnMemory
 
-        random.shuffle(memory)
+      player = self.game.get_opponent(player)
 
-        for batch_idx in range(0, len(memory), self.args['batch_size']):
+  @tf.function
+  def train(self, dataset):
+    for state, policy_targets, value_targets in dataset:
+      # ---------------------------------CHECK------------------------------------------------------
 
-            sample = memory[batch_idx:min(len(memory), batch_idx + self.args['batch_size'])]
-            state, policy_targets, value_targets = zip(*sample)
-            state = tf.constant(state, dtype=tf.float32) 
-            policy_targets = tf.constant(policy_targets, dtype=tf.float32) 
-            value_targets = tf.constant(value_targets, dtype=tf.float32)
+      self.step += 1
 
-            with tf.GradientTape() as tape: 
-                policy_preds, value_preds = self.model(state)
-                policy_loss = tf.keras.losses.CategoricalCrossentropy()(policy_targets, policy_preds)
-                value_loss = tf.keras.losses.MeanSquaredError()(value_targets, value_preds)
-                total_loss = policy_loss + value_loss
-                print(f'policy loss: {policy_loss.numpy()} value loss: {value_loss.numpy()} total loss: {total_loss}')
+      with tf.GradientTape() as tape:
+        policy_preds, value_preds = self.model(state)
+        policy_loss = tf.keras.losses.CategoricalCrossentropy()(policy_targets, policy_preds)
+        value_loss = tf.keras.losses.MeanSquaredError()(value_targets, value_preds)
 
-                grads = tape.gradient(total_loss, self.model.trainable_variables)
-                self.optimizer.apply_gradients(zip(grads, self.model.trainable_variables))
-                
-    
-    def learn(self):
+        total_loss = policy_loss + value_loss
 
-        for iter in range(self.args['num_iterations']):
-            memory = []
+      grads = tape.gradient(total_loss, self.model.trainable_variables)
+      self.optimizer.apply_gradients(zip(grads, self.model.trainable_variables))
 
-            for selfPlay in range(self.args['num_selfPlay_iterations']):
-                memory += selfPlay
+      # --- Log to TensorBoard ---
+      with self.summary_writer.as_default():
+          tf.summary.scalar('policy_loss', policy_loss, step=self.step)
+          tf.summary.scalar('value_loss', value_loss, step=self.step)
+          tf.summary.scalar('total_loss', total_loss, step=self.step)
+      # -------------------------
 
-            for epoch in range(self.args['num_epochs']):
-                self.train(memory)
+    #---------------------------------CHECK------------------------------------------------------------
 
-            model_path = './model.h5'
+  def learn(self):
 
-        # Save states
-        model_path = f'./model_iter_{iter+1}.h5'
-        tf.keras.models.save_model(self.model, filepath=model_path)
+    if not hasattr(self, 'summary_writer'):
+      log_dir = os.path.join("logs", datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
+      self.summary_writer = tf.summary.create_file_writer(log_dir)
+
+
+    for iteration in range(self.args['num_iterations']):
+      memory = []
+
+      for selfPlay_iteration in trange(self.args['num_selfPlay_iterations']):
+        memory += self.selfPlay()
+
+      dataset = tf.data.Dataset.from_tensor_slices((
+          [mem[0] for mem in memory],
+          [mem[1] for mem in memory],
+          [mem[2] for mem in memory]
+      ))
+      dataset = dataset.shuffle(buffer_size=max(1, len(memory))).batch(self.args['batch_size'])
+
+      #self.model.train()
+      for epoch in trange(self.args['num_epochs']):
+        self.train(dataset)
+
+    model_path = './content/drive/My Drive/model.h5'# <--- CHECK
+    tf.keras.models.save_model(self.model, model_path)# <--- CHECK
