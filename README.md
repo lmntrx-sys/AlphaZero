@@ -47,22 +47,21 @@ This implementation may include the following features (depending on the specifi
 ### Prerequisites
 
 * Python 3.x
-* TensorFlow or PyTorch (specify the framework used)
+* TensorFlow
 * NumPy
 
 ### Installation
 
 1.  Clone the repository:
     ```bash
-    git clone <repository_url>
+    git clone https://github.com/lmntrx-sys/AlphaZero.git
     cd alphazero
     ```
 2.  Install the necessary dependencies:
     ```bash
     pip install -r requirements.txt  # If a requirements.txt file exists
     # Or, install manually:
-    # pip install tensorflow  # If using TensorFlow
-    # pip install torch torchvision torchaudio  # If using PyTorch
+    # pip install tensorflow  
     pip install numpy
     ```
 
