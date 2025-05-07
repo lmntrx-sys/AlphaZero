@@ -35,12 +35,11 @@ The AlphaZero algorithm combines a deep neural network with Monte Carlo Tree Sea
 
 This implementation may include the following features (depending on the specific version):
 
-* **Deep Neural Network Architecture:** (Specify the architecture used, e.g., ResNet-like, number of layers, etc.)
-* **MCTS Implementation:** (Describe key aspects of the MCTS, e.g., selection, expansion, simulation, backpropagation)
-* **Replay Buffer:** A buffer to store self-play game trajectories for training.
-* **Training Loop:** The process of generating self-play data and updating the neural network.
+* **Deep Neural Network Architecture:** The model i used is the ResNet model which takes the board as an image ( 3 x 3 ) tensor with no colour coding
+* **MCTS Implementation:** The Monte Carlo tree search algo is such a long topic to describe in one page so i have provided links to the research paper
+* **Training Loop:** The process of generating self-play data and updating the neural network. The game of tictactoe has 19638 or 3^9 states sor you can adjust the parameters to build a good agent
 * **Evaluation:** Methods for evaluating the performance of the trained agent (e.g., playing against previous versions or other baselines).
-* **Game Environment:** (Specify the game environment this implementation is designed for, e.g., a specific board game implemented in Python).
+* **Game Environment:** This agent is buitl to play the game of tictactoe, which has over 19000 game states.
 
 ## Getting Started
 
@@ -70,36 +69,29 @@ This implementation may include the following features (depending on the specifi
 1.  **Configure the environment:** Modify the configuration files (if any) to specify game parameters, network architecture, training settings, etc.
 2.  **Run the training script:**
     ```bash
-    python train.py
+    training_script.py
     ```
-3.  **Evaluate the trained agent:**
+3.  **Evaluate the trained agent: Use the full training script to play the game using the model**
     ```bash
-    python evaluate.py
+    AlphaZero.ipynb
     ```
     (The specific script names might vary.)
 
-## Configuration
-
-(If applicable, describe the configuration options available, e.g., in a `config.yaml` or command-line arguments.)
 
 ## Contributing
 
-Contributions to this implementation are welcome! Please follow these guidelines:
+Contributions to this implementation are welcome! 
 
 1.  Fork the repository.
 2.  Create a new branch for your feature or bug fix.
 3.  Make your changes and ensure they are well-tested.
 4.  Submit a pull request with a clear description of your changes.
 
-Please adhere to the project's coding style and conventions.
 
 ## License
 
-(Specify the license under which this code is distributed, e.g., MIT License, Apache License 2.0.)
+MIT License
 
-## Acknowledgements
-
-(Optional: Acknowledge any relevant libraries, frameworks, or individuals who contributed to this work.)
 
 ## Further Reading
 
