@@ -37,7 +37,7 @@ This implementation may include the following features (depending on the specifi
 
 * **Deep Neural Network Architecture:** The model i used is the ResNet model which takes the board as an image ( 3 x 3 ) tensor with no colour coding
 * **MCTS Implementation:** The Monte Carlo tree search algo is such a long topic to describe in one page so i have provided links to the research paper
-* **Training Loop:** The process of generating self-play data and updating the neural network. The game of tictactoe has 19638 or 3^9 states sor you can adjust the parameters to build a good agent
+* **Training Loop:** The process of generating self-play data and updating the neural network. The game of tictactoe has 19683 or 3^9 states sor you can adjust the parameters to build a good agent
 * **Evaluation:** Methods for evaluating the performance of the trained agent (e.g., playing against previous versions or other baselines).
 * **Game Environment:** This agent is buitl to play the game of tictactoe, which has over 19000 game states.
 
@@ -90,11 +90,10 @@ Contributions to this implementation are welcome!
 
 ## License
 
-MIT License
+
 
 
 ## Further Reading
 
 * [Mastering the game of Go without human knowledge](https://www.nature.com/articles/nature24270) (Original AlphaGo Zero paper)
 * [Mastering Chess and Shogi by Self-Play with a General Reinforcement Learning Algorithm](https://arxiv.org/abs/1712.01815) (Original AlphaZero paper)
-* (Link to relevant blog posts, articles, or other resources)
