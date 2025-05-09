@@ -58,8 +58,7 @@ This implementation may include the following features (depending on the specifi
     ```
 2.  Install the necessary dependencies:
     ```bash
-    pip install -r requirements.txt  # If a requirements.txt file exists
-    # Or, install manually:
+    pip install -r requirements.txt 
     # pip install tensorflow  
     pip install numpy
     ```
